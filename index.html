@@ -1,0 +1,449 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Ficha de Monitoreo Docente</title>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js"></script>
+    <style>
+        :root {
+            --primary-green: #16a34a; /* Green 600 */
+            --light-green-bg: #f0fdf4; /* Green 50 */
+            --dark-green-text: #166534; /* Green 800 */
+            --gray-text: #4b5563; /* Gray 600 */
+            --border-color: #d1d5db; /* Gray 300 */
+        }
+
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+            background-color: var(--light-green-bg);
+            margin: 0;
+            padding: 2rem;
+            color: var(--gray-text);
+            -webkit-font-smoothing: antialiased;
+            -moz-osx-font-smoothing: grayscale;
+        }
+
+        .container {
+            max-width: 800px;
+            margin: 0 auto;
+            background-color: #ffffff;
+            border-radius: 12px;
+            box-shadow: 0 10px 25px rgba(0, 0, 0, 0.05);
+            overflow: hidden;
+        }
+
+        .content-padding {
+            padding: 2.5rem;
+            display: flex;
+            flex-direction: column;
+            gap: 2.5rem;
+        }
+        
+        header {
+            text-align: center;
+        }
+
+        header h1 {
+            color: var(--dark-green-text);
+            font-size: 2.25rem;
+            font-weight: 700;
+            margin: 0;
+        }
+
+        section {
+            border-top: 1px solid #e5e7eb; /* Gray 200 */
+            padding-top: 2rem;
+        }
+        
+        section h2 {
+            font-size: 1.5rem;
+            font-weight: 600;
+            color: #1f2937; /* Gray 800 */
+            margin-top: 0;
+            margin-bottom: 1rem;
+        }
+        
+        .info-grid {
+            display: grid;
+            grid-template-columns: 1fr;
+            gap: 1.5rem;
+        }
+
+        @media (min-width: 768px) {
+            .info-grid {
+                grid-template-columns: 1fr 1fr;
+            }
+        }
+
+        .input-group label {
+            display: block;
+            font-weight: 500;
+            color: #374151; /* Gray 700 */
+            margin-bottom: 0.5rem;
+        }
+
+        .input-group input,
+        .input-group textarea,
+        .input-group select {
+            width: 100%;
+            padding: 0.75rem;
+            border: 1px solid var(--border-color);
+            border-radius: 8px;
+            box-sizing: border-box;
+            transition: box-shadow 0.2s, border-color 0.2s;
+        }
+        
+        .input-group input:focus,
+        .input-group textarea:focus,
+        .input-group select:focus {
+            outline: none;
+            border-color: var(--primary-green);
+            box-shadow: 0 0 0 3px rgba(22, 163, 74, 0.2);
+        }
+        
+        .input-group textarea {
+            min-height: 120px;
+            resize: vertical;
+        }
+
+        table {
+            width: 100%;
+            border-collapse: collapse;
+        }
+
+        th, td {
+            padding: 1rem;
+            text-align: left;
+            vertical-align: top;
+            border-bottom: 1px solid #e5e7eb; /* Gray 200 */
+        }
+        
+        th {
+            background-color: #f9fafb; /* Gray 50 */
+            font-weight: 600;
+            color: #4b5563; /* Gray 600 */
+            font-size: 0.875rem;
+        }
+        
+        tr:nth-child(even) {
+            background-color: rgba(240, 253, 244, 0.5); /* Green 50 with alpha */
+        }
+
+        td:first-child {
+            width: 80%;
+        }
+
+        .total-score-section {
+            text-align: center;
+        }
+
+        .total-score-section p {
+            font-size: 3rem;
+            font-weight: 700;
+            color: var(--primary-green);
+            margin-top: 0.5rem;
+            margin-bottom: 0;
+        }
+
+        .export-section {
+            text-align: center;
+            padding: 2rem;
+        }
+
+        .export-button {
+            padding: 0.8rem 2rem;
+            font-size: 1rem;
+            font-weight: 600;
+            color: #ffffff;
+            background-color: var(--primary-green);
+            border: none;
+            border-radius: 8px;
+            cursor: pointer;
+            transition: background-color 0.3s ease, transform 0.1s ease;
+            box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
+        }
+
+        .export-button:hover {
+            background-color: #15803d; /* Green 700 */
+        }
+        
+        .export-button:active {
+            transform: translateY(1px);
+        }
+        
+        .export-button:disabled {
+            background-color: #9ca3af; /* Gray 400 */
+            cursor: not-allowed;
+        }
+        
+        /* For PDF export styling */
+        .textarea-replacement, .input-replacement {
+             border: 1px solid var(--border-color);
+             padding: 0.75rem;
+             width: 100%;
+             box-sizing: border-box;
+             border-radius: 8px;
+             white-space: pre-wrap;
+             word-wrap: break-word;
+             overflow-wrap: break-word;
+             font-size: 1rem; /* Match input font size */
+        }
+
+        .textarea-replacement {
+            min-height: 120px;
+        }
+
+        .input-replacement {
+            display: flex;
+            align-items: center;
+            min-height: 2.6rem; /* Calculated from input padding + typical line height */
+        }
+
+    </style>
+<link rel="stylesheet" href="/index.css">
+</head>
+<body>
+
+    <div id="pdf-content" class="container">
+        <div class="content-padding">
+            <header>
+                <h1>Ficha de Monitoreo Docente</h1>
+            </header>
+
+            <section>
+                <h2>Información General</h2>
+                <div class="info-grid">
+                    <div class="input-group">
+                        <label for="teacherName">Nombre completo del docente:</label>
+                        <input type="text" id="teacherName" />
+                    </div>
+                    <div class="input-group">
+                        <label for="observationDate">Fecha de observación:</label>
+                        <input type="date" id="observationDate" />
+                    </div>
+                    <div class="input-group">
+                        <label for="sessionPurpose">Propósito de la sesión:</label>
+                        <input type="text" id="sessionPurpose" />
+                    </div>
+                    <div class="input-group">
+                        <label for="gradeSection">Grado/Sección:</label>
+                        <input type="text" id="gradeSection" />
+                    </div>
+                    <div class="input-group">
+                        <label for="evaluatorName">Persona responsable del monitoreo:</label>
+                        <input type="text" id="evaluatorName" />
+                    </div>
+                    <div class="input-group">
+                        <label for="subjectArea">Área:</label>
+                        <input type="text" id="subjectArea" />
+                    </div>
+                </div>
+            </section>
+            
+            <section>
+                <h2>Criterios de Evaluación</h2>
+                <p style="margin-top: -0.5rem; color: #6b7280;">Escala de valoración: En inicio (1), En proceso (2), Logrado (3)</p>
+                <div style="margin-top: 1.5rem; border: 1px solid var(--border-color); border-radius: 8px; overflow: hidden;">
+                    <table>
+                        <thead>
+                            <tr>
+                                <th>Criterio</th>
+                                <th style="text-align: center;">Puntaje (1-3)</th>
+                            </tr>
+                        </thead>
+                        <tbody id="criteria-table-body">
+                            <!-- Rows will be dynamically inserted here by JavaScript -->
+                        </tbody>
+                    </table>
+                </div>
+            </section>
+
+            <section class="total-score-section">
+                <h2>Puntaje Total</h2>
+                <p id="total-score">0</p>
+            </section>
+
+            <section>
+                <div class="input-group">
+                    <label for="achievedAspects">A) Aspectos logrados:</label>
+                    <textarea id="achievedAspects"></textarea>
+                </div>
+                <div class="input-group" style="margin-top: 1.5rem;">
+                    <label for="improvementAspects">B) Aspectos por mejorar:</label>
+                    <textarea id="improvementAspects"></textarea>
+                </div>
+            </section>
+        </div>
+    </div>
+    
+    <div class="export-section">
+        <button id="export-pdf-button" class="export-button">Exportar a PDF</button>
+    </div>
+
+    <script>
+        document.addEventListener('DOMContentLoaded', () => {
+            const CRITERIA = [
+                "1. El(la) docente asiste a dictar su clase respetando el código de vestimenta de la institución, portando todo lo necesario para el desarrollo de la sesión de aprendizaje.",
+                "2. El(la) docente llega al aula de clases puntualmente.",
+                "3. El(la) docente dispone y ordena el aula para comenzar la sesión de aprendizaje.",
+                "4. El(la) docente parte de una situación retadora o significativa generando interés y disposición y ofreciendo múltiples oportunidades de participación.",
+                "5. El(la) docente recupera y activa los saberes previos de los estudiantes, a través de preguntas o tareas.",
+                "6. El(la) docente genera el conflicto cognitivo en los estudiantes involucrando su interés y motivación por la búsqueda de una respuesta.",
+                "7. El(la) docente expresa claramente a los estudiantes el propósito de aprendizaje y los criterios de evaluación, registrándolos en un lugar visible de la pizarra.",
+                "8. El(la) docente vela por el cumplimiento de los acuerdos de convivencia antes, durante y después del desarrollo de la actividad de aprendizaje.",
+                "9. Identifica estudiantes con menor participación activa, incluyendo a quienes muestren desgano/desinterés, y los involucra intencionalmente mediante preguntas o tareas.",
+                "10. El(la) docente media el proceso de aprendizaje de sus estudiantes de manera diferenciada, según sus características, potencialidades y necesidades identificadas en la evaluación diagnóstica.",
+                "11. El(la) docente hace uso de materiales y recursos educativos (impresos, digitales, concretos o del entorno) que contribuyen al desarrollo de las competencias.",
+                "12. El(la) docente propicia que el estudiante aprenda haciendo, poniendo en juego razonamiento, creatividad y/o pensamiento crítico a partir de actividades individuales o cooperativas.",
+                "13. El(la) docente vela por la continuidad de la sesión de aprendizaje sin interrupciones, quiebres de normas o contratiempos.",
+                "14. El(la) docente demuestra dominio y manejo del tema, desarrollando la sesión con seguridad y absolviendo dudas de los estudiantes.",
+                "15. El(la) docente se expresa con tono de voz adecuado, modulando según lo que desea comunicar.",
+                "16. El docente emplea lenguaje respetuoso, cordial y empático, promoviendo la autonomía del estudiante mediante escucha atenta y recursos de comunicación.",
+                "17. El(la) docente dispone y ordena el aula al finalizar la sesión de aprendizaje.",
+                "18. El docente monitorea activamente la comprensión y progreso de los estudiantes durante la sesión, registrando evidencias en instrumentos de evaluación.",
+                "19. El(la) docente analiza las evidencias de aprendizaje considerando los criterios establecidos, usando diversas técnicas y aprovechando el error de forma constructiva.",
+                "20. Ante las respuestas o productos de los estudiantes, el(la) docente brinda retroalimentación por descubrimiento o reflexión al menos en una ocasión.",
+                "21. El(la) docente promueve que los estudiantes gestionen su aprendizaje de forma autónoma, reconociendo fortalezas y dificultades.",
+                "22. El(la) docente fomenta la reflexión sobre la importancia y utilidad del nuevo aprendizaje y cómo aplicarlo a la vida cotidiana."
+            ];
+
+            const tableBody = document.getElementById('criteria-table-body');
+            const totalScoreEl = document.getElementById('total-score');
+            const exportPdfButton = document.getElementById('export-pdf-button');
+            let scoreSelects = [];
+
+            function calculateTotalScore() {
+                const total = scoreSelects.reduce((sum, select) => {
+                    return sum + (parseInt(select.value, 10) || 0);
+                }, 0);
+                totalScoreEl.textContent = total;
+            }
+            
+            function renderCriteriaTable() {
+                CRITERIA.forEach((criterion) => {
+                    const row = document.createElement('tr');
+                    
+                    const criterionCell = document.createElement('td');
+                    criterionCell.textContent = criterion;
+                    
+                    const scoreCell = document.createElement('td');
+                    const select = document.createElement('select');
+                    select.className = 'input-group';
+                    select.innerHTML = `
+                        <option value="" selected disabled>--</option>
+                        <option value="1">1</option>
+                        <option value="2">2</option>
+                        <option value="3">3</option>
+                    `;
+                    select.style.textAlign = "center";
+                    select.addEventListener('change', calculateTotalScore);
+                    scoreSelects.push(select);
+                    scoreCell.appendChild(select);
+                    
+                    row.appendChild(criterionCell);
+                    row.appendChild(scoreCell);
+                    tableBody.appendChild(row);
+                });
+            }
+
+            function exportToPDF() {
+                const teacherName = document.getElementById('teacherName').value;
+                const subjectArea = document.getElementById('subjectArea').value;
+                const observationDate = document.getElementById('observationDate').value;
+                
+                if (!teacherName || !subjectArea || !observationDate) {
+                    alert("Por favor, complete el nombre del docente, el área y la fecha antes de exportar.");
+                    return;
+                }
+                
+                exportPdfButton.textContent = 'Generando PDF...';
+                exportPdfButton.disabled = true;
+
+                // Replace inputs and textareas with divs for better PDF rendering
+                const elementsToReplace = [
+                    { id: 'teacherName', type: 'input' },
+                    { id: 'observationDate', type: 'input' },
+                    { id: 'sessionPurpose', type: 'input' },
+                    { id: 'gradeSection', type: 'input' },
+                    { id: 'evaluatorName', type: 'input' },
+                    { id: 'subjectArea', type: 'input' },
+                    { id: 'achievedAspects', type: 'textarea' },
+                    { id: 'improvementAspects', type: 'textarea' }
+                ];
+                const replacements = [];
+
+                elementsToReplace.forEach(item => {
+                    const originalElement = document.getElementById(item.id);
+                    const parent = originalElement.parentNode;
+                    const div = document.createElement('div');
+                    
+                    div.className = item.type === 'textarea' ? 'textarea-replacement' : 'input-replacement';
+                    
+                    div.textContent = originalElement.value || ' '; // Use a space to ensure div has height
+                    parent.insertBefore(div, originalElement);
+                    originalElement.style.display = 'none';
+                    replacements.push({ original: originalElement, replacement: div });
+                });
+
+                // Use a short timeout to allow the DOM to update before capturing
+                setTimeout(() => {
+                    const { jsPDF } = window.jspdf;
+                    const content = document.getElementById('pdf-content');
+
+                    window.html2canvas(content, { 
+                        scale: 2,
+                        useCORS: true,
+                        logging: false
+                    }).then(canvas => {
+                        const imgData = canvas.toDataURL('image/png');
+                        const doc = new jsPDF({
+                            orientation: 'portrait',
+                            unit: 'pt',
+                            format: 'a4',
+                            compress: true,
+                        });
+
+                        const pageWidth = doc.internal.pageSize.getWidth();
+                        const pageHeight = doc.internal.pageSize.getHeight();
+                        const imgHeight = (canvas.height * pageWidth) / canvas.width;
+                        let heightLeft = imgHeight;
+                        let position = 0;
+
+                        doc.addImage(imgData, 'PNG', 0, position, pageWidth, imgHeight, undefined, 'FAST');
+                        heightLeft -= pageHeight;
+
+                        while (heightLeft > 0) {
+                            position = heightLeft - imgHeight;
+                            doc.addPage();
+                            doc.addImage(imgData, 'PNG', 0, position, pageWidth, imgHeight, undefined, 'FAST');
+                            heightLeft -= pageHeight;
+                        }
+
+                        const fileName = `${teacherName.trim().replace(/\s+/g, '_')}_${subjectArea.trim().replace(/\s+/g, '_')}_${observationDate}.pdf`;
+                        doc.save(fileName);
+
+                    }).catch(err => {
+                        console.error("Error al generar el PDF:", err);
+                        alert("Hubo un error al generar el PDF. Por favor, intente de nuevo.");
+                    }).finally(() => {
+                        // Restore original elements
+                        replacements.forEach(item => {
+                            item.original.style.display = '';
+                            item.replacement.remove();
+                        });
+
+                        exportPdfButton.textContent = 'Exportar a PDF';
+                        exportPdfButton.disabled = false;
+                    });
+                }, 100);
+            }
+
+            renderCriteriaTable();
+            exportPdfButton.addEventListener('click', exportToPDF);
+        });
+    </script>
+<script type="module" src="/index.tsx"></script>
+</body>
+</html>
